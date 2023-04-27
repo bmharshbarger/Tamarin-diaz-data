@@ -1,0 +1,9 @@
+data-raw/*
+figures/*
+R/*
+*.Rhistory
+*.Rdata
+/.Rproj.user/*
+.Rproj.user
+*.png
+!docs/*.png

@@ -1,0 +1,77 @@
+# Database building
+
+In this chapter, I built my tamarin database 
+
+```{r setup, echo =FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+library(DBI)
+library(dplyr)
+```
+
+Here I read in csv files and combined into one data frame
+
+```{r}
+group_lc <-  read.csv("data-raw/group_lc_habitat.csv")
+
+group_ph <- read.csv("data-raw/group_ph_habitat.csv")
+
+group_ba <- read.csv("data-raw/group_ba_habitat.csv")
+
+groups <- na.omit(rbind(group_lc, group_ph, group_ba)) # combine into 1 data frame
+# and omit na values 
+
+```
+
+
+
+Next, I formatted the data frame and created a date time column
+
+```{r, results = 'hide'}
+groups <- groups %>% # merge date time columns
+  mutate(date_time = as.POSIXct(paste(date, time), 
+         format = "%m/%d/%Y %H:%M"))
+
+groups <- groups[c(-2, -3)] # remove date and time columns
+
+
+groups$unique_id <- 1:nrow(groups)
+
+saveRDS(groups, "groups.RDS")
+```
+
+Here I connected to SQL and created the database
+
+```{r, results = 'hide'}
+my_db <- dbConnect(RSQLite::SQLite(), "my_db.db") # establish database connection
+
+dbExecute(my_db, "DROP TABLE tamarin;")
+
+dbExecute(my_db, "CREATE TABLE tamarin(
+          unique_id VARCHAR(5) NOT NULL,
+          group_id VARCHAR(2) NOT NULL,
+          waypoint VARCHAR(4) NOT NULL,
+          lat CHAR(7) NOT NULL,
+          lon CHAR(7) NOT NULL,
+          habitat VARCHAR(10),
+          boundary VARCHAR(10),
+          boundary_2 VARCHAR(10),
+          height VARCHAR(10),
+          height_code VARCHAR(10),
+          canopy VARCHAR(10),
+          canopy_code VARCHAR(5),
+          date_time VARCHAR(20),
+          PRIMARY KEY (unique_id)
+          );"
+          )
+```
+Lastly, I wrote and queried the table 
+
+```{r}
+dbWriteTable(my_db, "tamarin", groups, append = TRUE)
+
+dbGetQuery(my_db, "SELECT * FROM tamarin LIMIT 10;")
+```
+
