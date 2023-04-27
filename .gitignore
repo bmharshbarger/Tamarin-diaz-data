@@ -5,5 +5,3 @@ R/*
 *.Rdata
 /.Rproj.user/*
 .Rproj.user
-*.png
-!docs/*.png
